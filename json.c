@@ -313,7 +313,7 @@ json_value * json_parse_ex (json_settings * settings,
 
       state.cur_line = 1;
 
-      for (state.ptr = json ;; ++ state.ptr)
+      for (state.ptr = json ;; ++ state.ptr, ++ state.cur_col)
       {
          json_char b = (state.ptr == end ? 0 : *state.ptr);
          
@@ -357,11 +357,11 @@ json_value * json_parse_ex (json_settings * settings,
                     if ((uchar & 0xF800) == 0xD800) {
                         json_uchar uchar2;
                         
-                        if (end - state.ptr <= 6 || (*++ state.ptr) != '\\' || (*++ state.ptr) != 'u' ||
-                            (uc_b1 = hex_value (*++ state.ptr)) == 0xFF ||
-                            (uc_b2 = hex_value (*++ state.ptr)) == 0xFF ||
-                            (uc_b3 = hex_value (*++ state.ptr)) == 0xFF ||
-                            (uc_b4 = hex_value (*++ state.ptr)) == 0xFF)
+                        if (end - state.ptr <= 6 || (++ state.cur_col, *++ state.ptr) != '\\' || (++ state.cur_col, *++ state.ptr) != 'u' ||
+                            (uc_b1 = hex_value ((++ state.cur_col, *++ state.ptr))) == 0xFF ||
+                            (uc_b2 = hex_value ((++ state.cur_col, *++ state.ptr))) == 0xFF ||
+                            (uc_b3 = hex_value ((++ state.cur_col, *++ state.ptr))) == 0xFF ||
+                            (uc_b4 = hex_value ((++ state.cur_col, *++ state.ptr))) == 0xFF)
                         {
                             sprintf (error, "Invalid character value `%c` (at %d:%d)", b, line_and_col);
                             goto e_failed;
@@ -484,6 +484,7 @@ json_value * json_parse_ex (json_settings * settings,
                   {
                      flags &= ~ flag_line_comment;
                      -- state.ptr;  /* so null can be reproc'd */
+                     -- state.cur_col;
                   }
 
                   continue;
@@ -500,6 +501,7 @@ json_value * json_parse_ex (json_settings * settings,
                   {
                      flags &= ~ flag_block_comment;
                      ++ state.ptr;  /* skip closing sequence */
+                     ++ state.cur_col;
                   }
 
                   continue;
@@ -512,7 +514,7 @@ json_value * json_parse_ex (json_settings * settings,
                   goto e_failed;
                }
 
-               if (++ state.ptr == end)
+               if (++ state.cur_col, ++ state.ptr == end)
                {  sprintf (error, "%d:%d: EOF unexpected", line_and_col);
                   goto e_failed;
                }
@@ -636,8 +638,8 @@ json_value * json_parse_ex (json_settings * settings,
 
                      case 't':
 
-                        if ((end - state.ptr) < 3 || *(++ state.ptr) != 'r' ||
-                            *(++ state.ptr) != 'u' || *(++ state.ptr) != 'e')
+                        if ((end - state.ptr) < 3 || *(++ state.cur_col, ++ state.ptr) != 'r' ||
+                            *(++ state.cur_col, ++ state.ptr) != 'u' || *(++ state.cur_col, ++ state.ptr) != 'e')
                         {
                            goto e_unknown_value;
                         }
@@ -652,9 +654,9 @@ json_value * json_parse_ex (json_settings * settings,
 
                      case 'f':
 
-                        if ((end - state.ptr) < 4 || *(++ state.ptr) != 'a' ||
-                            *(++ state.ptr) != 'l' || *(++ state.ptr) != 's' ||
-                            *(++ state.ptr) != 'e')
+                        if ((end - state.ptr) < 4 || *(++ state.cur_col, ++ state.ptr) != 'a' ||
+                            *(++ state.cur_col, ++ state.ptr) != 'l' || *(++ state.cur_col, ++ state.ptr) != 's' ||
+                            *(++ state.cur_col, ++ state.ptr) != 'e')
                         {
                            goto e_unknown_value;
                         }
@@ -667,8 +669,8 @@ json_value * json_parse_ex (json_settings * settings,
 
                      case 'n':
 
-                        if ((end - state.ptr) < 3 || *(++ state.ptr) != 'u' ||
-                            *(++ state.ptr) != 'l' || *(++ state.ptr) != 'l')
+                        if ((end - state.ptr) < 3 || *(++ state.cur_col, ++ state.ptr) != 'u' ||
+                            *(++ state.cur_col, ++ state.ptr) != 'l' || *(++ state.cur_col, ++ state.ptr) != 'l')
                         {
                            goto e_unknown_value;
                         }
@@ -691,7 +693,7 @@ json_value * json_parse_ex (json_settings * settings,
                               while (isdigit (b) || b == '+' || b == '-'
                                         || b == 'e' || b == 'E' || b == '.')
                               {
-                                 if ( (++ state.ptr) == end)
+                                 if ( (++ state.cur_col, ++ state.ptr) == end)
                                  {
                                     b = 0;
                                     break;
@@ -802,6 +804,7 @@ json_value * json_parse_ex (json_settings * settings,
                      if (would_overflow(top->u.integer, b))
                      {  -- num_digits;
                         -- state.ptr;
+                        -- state.cur_col;
                         top->type = json_double;
                         top->u.dbl = (double)top->u.integer;
                         continue;
@@ -904,6 +907,7 @@ json_value * json_parse_ex (json_settings * settings,
          {
             flags &= ~ flag_reproc;
             -- state.ptr;
+            -- state.cur_col;
          }
 
          if (flags & flag_next)
