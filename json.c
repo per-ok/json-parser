@@ -708,7 +708,7 @@ json_value * json_parse_ex (json_settings * settings,
 
                            flags &= ~ (flag_num_negative | flag_num_e |
                                         flag_num_e_got_sign | flag_num_e_negative |
-                                           flag_num_zero);
+                                           flag_num_zero | flag_num_got_decimal);
 
                            num_digits = 0;
                            num_fraction = 0;
@@ -821,8 +821,7 @@ json_value * json_parse_ex (json_settings * settings,
 
                   continue;
                }
-
-               if (b == '+' || b == '-')
+               else if (b == '+' || b == '-')
                {
                   if ( (flags & flag_num_e) && !(flags & flag_num_e_got_sign))
                   {
@@ -834,15 +833,18 @@ json_value * json_parse_ex (json_settings * settings,
                      continue;
                   }
                }
-               else if (b == '.' && top->type == json_integer)
+               else if (b == '.' && !(flags & flag_num_got_decimal))
                {
                   if (!num_digits)
                   {  sprintf (error, "%d:%d: Expected digit before `.`", line_and_col);
                      goto e_failed;
                   }
 
-                  top->type = json_double;
-                  top->u.dbl = (double) top->u.integer;
+                  if(top->type == json_integer)
+                  {
+                     top->type = json_double;
+                     top->u.dbl = (double) top->u.integer;
+                  }
 
                   flags |= flag_num_got_decimal;
                   num_digits = 0;
