@@ -636,6 +636,7 @@ ac_user_opts='
 enable_option_checking
 with_math
 enable_debug
+enable_track_source
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1267,6 +1268,9 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug          Build a debug version of json-parser
                           [default=disabled]
+  --enable-track-source   Lets the json-parser user retrieve the source
+                          line/column number of a parsed json_value.
+                          [default=disabled]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1755,8 +1759,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 VERSION_MAJOR="1.1"
-
-
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -2666,6 +2668,18 @@ fi
 
 if test "x$enable_debug" = xyes; then
 	CFLAGS="$CFLAGS -g -O0"
+fi
+
+# Check whether --enable-track-source was given.
+if test "${enable_track_source+set}" = set; then :
+  enableval=$enable_track_source; enable_value_pos="$enableval"
+else
+  enable_value_pos=no
+
+fi
+
+if test "x$enable_value_pos" = xyes; then
+	CFLAGS="$CFLAGS -DJSON_TRACK_SOURCE"
 fi
 
 VERSION_MAJOR=$VERSION_MAJOR
